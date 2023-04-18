@@ -94,6 +94,7 @@ def main():
 
             unigram_counts = {}
             for w in tqdm.tqdm(words):
+                # TODO parallelize
                 # compute monogram count for "w"
                 count = 0
                 for doc in wiki_data:
@@ -118,6 +119,7 @@ def main():
             for w1, w2 in tqdm.tqdm(
                 itertools.permutations(words, 2), total=math.perm(len(words), 2)
             ):
+                # TODO parallelize
                 # compute bigram count for "w1 w2"
                 count = 0
                 for doc in wiki_data:
@@ -139,12 +141,16 @@ def main():
         else:
             print(f"Computing adjacency matrix for {lang}")
 
+            # TODO save word indices
+
             adj_matrix = np.zeros((len(words), len(words)))
             for w1, w2 in tqdm.tqdm(
                 itertools.permutations(words, 2), total=math.perm(len(words), 2)
             ):
+                # TODO add directed edge e from w1 to w2 where w(e) = p(w2|w1) = p(w1, w2) / p(w1) (and vice versa)
                 pass
 
+            # TODO update save format for np array
             # save bigram counts
             with open(bigram_path, "w") as f:
                 json.dump(adj_matrix, f, indent=4)

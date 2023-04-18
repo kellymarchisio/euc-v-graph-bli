@@ -1,2 +1,4 @@
 .env
 .vscode
+bigram_counts
+unigram_counts
