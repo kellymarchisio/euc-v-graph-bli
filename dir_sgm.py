@@ -1,4 +1,6 @@
-import nltk
+import json
+import math
+from pathlib import Path
 import tqdm
 import itertools
 import tensorflow_datasets as tfds
@@ -30,10 +32,15 @@ def load_wiki_data(lang):
     """
     # TODO remove [:1%]
     # load wiki40b data for language
-    ds = tfds.load(f'wiki40b/{lang}', split='train[:1%]')
+    ds = tfds.load(f"wiki40b/{lang}", split="train[:1%]")
 
     # separate samples by special markers
-    special_markers = ["_START_ARTICLE_", "_START_SECTION_", "_START_PARAGRAPH_", "_NEWLINE_"]
+    special_markers = [
+        "_START_ARTICLE_",
+        "_START_SECTION_",
+        "_START_PARAGRAPH_",
+        "_NEWLINE_",
+    ]
 
     # TODO add tqdm
     wiki_data = []
@@ -60,14 +67,63 @@ def main():
     src = "en"
     trg = "de"
 
-    word_pairs, src_words, trg_words = process_dict_pairs(f"dicts/{src}-{trg}/train/{src}-{trg}.0-5000.txt.1to1")
+    word_pairs, src_words, trg_words = process_dict_pairs(
+        f"dicts/{src}-{trg}/train/{src}-{trg}.0-5000.txt.1to1"
+    )
+
+    # TODO remove
+    src_words = list(src_words)[:10]
+    trg_words = list(trg_words)[:10]
 
     for lang, words in [(src, src_words), (trg, trg_words)]:
         wiki_data = load_wiki_data(lang)
 
-        for w1, w2 in itertools.combinations(words, 2):
-            # compute bigram count for w1 w2
-            pass
+        # TODO remove
+        wiki_data = wiki_data[:10000]
+
+        unigram_path = Path(f"unigram_counts/{lang}.json")
+        unigram_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if unigram_path.exists():
+            print(f"Loading unigram counts for {lang}")
+            with open(unigram_path) as f:
+                unigram_counts = json.load(f)
+        else:
+            print(f"Computing unigram counts for {lang}")
+
+            unigram_counts = {}
+            for w in tqdm.tqdm(words):
+                # compute monogram count for "w"
+                count = 0
+                for doc in wiki_data:
+                    count += doc.count(w)
+                unigram_counts[w] = count
+
+            # save unigram counts
+            with open(unigram_path, "w") as f:
+                json.dump(unigram_counts, f, indent=4)
+
+        bigram_path = Path(f"bigram_counts/{lang}.json")
+        bigram_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if bigram_path.exists():
+            print(f"Loading bigram counts for {lang}")
+            with open(bigram_path) as f:
+                bigram_counts = json.load(f)
+        else:
+            print(f"Computing bigram counts for {lang}")
+
+            bigram_counts = {}
+            for w1, w2 in tqdm.tqdm(itertools.permutations(words, 2), total=math.perm(len(words), 2)):
+                # compute bigram count for "w1 w2"
+                count = 0
+                for doc in wiki_data:
+                    count += doc.count(f"{w1} {w2}")
+                bigram_counts[(w1, w2)] = count
+
+            # save bigram counts
+            with open(bigram_path, "w") as f:
+                json.dump(bigram_counts, f, indent=4)
 
 
 if __name__ == "__main__":
