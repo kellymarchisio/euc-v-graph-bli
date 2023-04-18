@@ -1,3 +1,4 @@
+import numpy as np
 import json
 import math
 from pathlib import Path
@@ -114,7 +115,9 @@ def main():
             print(f"Computing bigram counts for {lang}")
 
             bigram_counts = {}
-            for w1, w2 in tqdm.tqdm(itertools.permutations(words, 2), total=math.perm(len(words), 2)):
+            for w1, w2 in tqdm.tqdm(
+                itertools.permutations(words, 2), total=math.perm(len(words), 2)
+            ):
                 # compute bigram count for "w1 w2"
                 count = 0
                 for doc in wiki_data:
@@ -124,6 +127,27 @@ def main():
             # save bigram counts
             with open(bigram_path, "w") as f:
                 json.dump(bigram_counts, f, indent=4)
+
+        # create directed adjacency matrix
+        adj_matrix_path = Path(f"adj_matrices/{lang}.json")
+        adj_matrix_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if adj_matrix_path.exists():
+            print(f"Loading adjacency matrix for {lang}")
+            with open(adj_matrix_path) as f:
+                adj_matrix = json.load(f)
+        else:
+            print(f"Computing adjacency matrix for {lang}")
+
+            adj_matrix = np.zeros((len(words), len(words)))
+            for w1, w2 in tqdm.tqdm(
+                itertools.permutations(words, 2), total=math.perm(len(words), 2)
+            ):
+                pass
+
+            # save bigram counts
+            with open(bigram_path, "w") as f:
+                json.dump(adj_matrix, f, indent=4)
 
 
 if __name__ == "__main__":
